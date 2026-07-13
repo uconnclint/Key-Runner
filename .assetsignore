@@ -1,0 +1,10 @@
+**/.wrangler
+**/node_modules
+**/.git
+**/.DS_Store
+**/.env
+.claude
+*.zip
+*.md
+wrangler.toml
+.assetsignore

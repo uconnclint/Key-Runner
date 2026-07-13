@@ -1,0 +1,4 @@
+html, body { height:100%; margin:0; background:#0b1020; }
+body { display:flex; align-items:center; justify-content:center; }
+#game { box-shadow:0 20px 60px rgba(0,0,0,.35); }
+canvas { image-rendering: pixelated; }
