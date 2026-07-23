@@ -1,24 +1,11 @@
 import { SFX } from '../utils/audio.js';
-import { REMOTE_LB_URL } from '../config.js';
+import { REMOTE_LB_URL, getLastInitials, setLastInitials } from '../config.js';
 import { getMissionLines } from '../utils/missions.js';
+import { pickInitials } from '../ui/InitialsPicker.js';
 
-// Block a few combos; add more as needed (UPPERCASE A–Z/0–9)
+// Block a few combos; add more as needed (UPPERCASE A–Z -- the picker
+// below only ever offers letters, so digit combos can't occur anymore).
 const BANNED = new Set(['ASS','CUM','WTF']);
-
-function askInitials(){
-  let last = (localStorage.getItem('kr_last_name') || '').toUpperCase();
-  for (let i = 0; i < 3; i++){
-    const raw = window.prompt('Enter 3-letter initials (A–Z / 0–9):', last || '');
-    if (raw === null) break;
-    let s = String(raw).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3);
-    if (s.length === 3 && !BANNED.has(s)) {
-      localStorage.setItem('kr_last_name', s);
-      return s;
-    }
-    alert('Please enter exactly 3 letters/numbers (no banned combos).');
-  }
-  return 'KID';
-}
 
 async function postScore(url, payload){
   try{
@@ -101,8 +88,11 @@ export default class OverScene extends Phaser.Scene {
       });
     this.sound.mute = muted;
 
-    // Ask initials + POST
-    const name = askInitials();
+    // Ask initials (Phaser-native picker -- window.prompt()/alert() are
+    // policy-blocked on managed Chromebooks, see game-house-style's
+    // device-gotchas) + POST
+    const name = await pickInitials(this, { seed: getLastInitials(), banned: BANNED });
+    setLastInitials(name);
     if (REMOTE_LB_URL) {
       // fire-and-forget; don't block UI if it fails
       await postScore(REMOTE_LB_URL, { name, score, letters, time, mode, difficulty });
