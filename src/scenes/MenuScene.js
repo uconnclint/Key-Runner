@@ -109,15 +109,15 @@ this.add.text(width/2, 152, 'Type the green letter before time runs out. Wrong k
       this.scene.start('play', { mode: GameConfig.mode, difficulty: GameConfig.difficulty, charId });
     });
 
-    // 🔊/🔇 mute
-    this.muteText = this.add.text(width-60, 20, (localStorage.getItem('kr_muted')==='1')?'🔇':'🔊', {fontSize:'28px'})
+    // 🔊/🔇 mute (SFX.muted is a live facade over ctx.settings)
+    this.muteText = this.add.text(width-60, 20, SFX.muted ? '🔇' : '🔊', {fontSize:'28px'})
       .setInteractive({useHandCursor:true})
       .on('pointerdown', () => {
         SFX.setMuted(!SFX.muted);
         this.sound.mute = SFX.muted;
         this.muteText.setText(SFX.muted ? '🔇' : '🔊');
       });
-    this.sound.mute = (localStorage.getItem('kr_muted')==='1');
+    this.sound.mute = SFX.muted;
 
     // Init labels + kick off preview
     this._refresh();
@@ -189,7 +189,7 @@ this.add.text(width/2, 152, 'Type the green letter before time runs out. Wrong k
     if (p && typeof p.catch === 'function') p.catch(()=>{});
     this.music = snd;
 
-    this.sound.mute = (localStorage.getItem('kr_muted')==='1');
+    this.sound.mute = SFX.muted;
   }
 
   // --- UI helpers ---

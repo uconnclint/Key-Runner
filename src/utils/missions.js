@@ -1,3 +1,5 @@
+import ctx from '../engine-bridge.js';
+
 export const MISSIONS = [
   { id: 'letters50', title: 'Type 50 letters', target: 50, field: 'letters' },
   { id: 'streak20', title: 'Hit a 20 streak', target: 20, field: 'bestStreak' },
@@ -6,16 +8,16 @@ export const MISSIONS = [
   { id: 'survive45', title: 'Survive 45 seconds', target: 45, field: 'time' }
 ];
 
+// Live mutable reference into the save blob (kr_mission_progress facade) --
+// getMissionProgress()'s backfill loop below mutates it directly, matching
+// the original's in-memory-only backfill (no persist) until
+// updateMissionsFromRun() explicitly calls saveProgress().
 function loadProgress(){
-  try {
-    return JSON.parse(localStorage.getItem('kr_mission_progress') || '{}') || {};
-  } catch {
-    return {};
-  }
+  return ctx.save.get().missions;
 }
 
 function saveProgress(progress){
-  localStorage.setItem('kr_mission_progress', JSON.stringify(progress));
+  ctx.save.patch({ missions: progress });
 }
 
 export function getMissionProgress(){

@@ -54,7 +54,7 @@ export default class PlayScene extends Phaser.Scene {
       stroke:'#07101d', strokeThickness:4
     }).setOrigin(0.5);
 
-    this.muteText = this.add.text(width-60, 18, (localStorage.getItem('kr_muted')==='1')?'MUTE':'SOUND', {
+    this.muteText = this.add.text(width-60, 18, SFX.muted ? 'MUTE' : 'SOUND', {
       fontFamily:'"Press Start 2P"', fontSize:'10px', color:'#e6f3ff',
       backgroundColor:'#18243a', padding:{x:8,y:7}
     }).setInteractive({useHandCursor:true}).on('pointerdown', () => {
@@ -62,7 +62,7 @@ export default class PlayScene extends Phaser.Scene {
       this.sound.mute = SFX.muted;
       this.muteText.setText(SFX.muted ? 'MUTE' : 'SOUND');
     });
-    this.sound.mute = (localStorage.getItem('kr_muted')==='1');
+    this.sound.mute = SFX.muted;
     this._startPlaylist(getSelectedTrackIndex());
 
     this.kb = new OnScreenKeyboard(this);
@@ -489,7 +489,7 @@ export default class PlayScene extends Phaser.Scene {
     const p = snd.play({ loop:false });
     if (p && typeof p.catch === 'function') p.catch(()=>{});
     this.music = snd;
-    this.sound.mute = (localStorage.getItem('kr_muted')==='1');
+    this.sound.mute = SFX.muted;
   }
 
   _cleanup(){

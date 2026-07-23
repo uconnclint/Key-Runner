@@ -1,6 +1,13 @@
+import ctx from './engine-bridge.js';
+
+// mode/difficulty are read once here (matching the original's read-once-
+// at-module-load shape) then mutated directly in memory by MenuScene's
+// picker buttons; savePrefs() below remains the explicit "commit to
+// storage" checkpoint, now writing through ctx.save instead of raw
+// localStorage.
 export const GameConfig = {
-  mode: localStorage.getItem('kr_mode') || 'mixed',
-  difficulty: localStorage.getItem('kr_diff') || 'easy',
+  mode: ctx.save.get().mode,
+  difficulty: ctx.save.get().diff,
   times: { easy: 2.35, medium: 1.95, hard: 1.55 },
   difficultyBonus: { easy: 1, medium: 1.25, hard: 1.6 },
   width: 900,
@@ -43,27 +50,33 @@ export const CHARACTERS = [
 ];
 
 export function savePrefs() {
-  localStorage.setItem('kr_mode', GameConfig.mode);
-  localStorage.setItem('kr_diff', GameConfig.difficulty);
+  ctx.save.patch({ mode: GameConfig.mode, diff: GameConfig.difficulty });
 }
 
 // Music helpers
 export function getSelectedTrackIndex() {
-  const n = parseInt(localStorage.getItem('kr_track_idx') ?? '0', 10);
+  const n = ctx.save.get().trackIdx;
   return Number.isFinite(n) ? Math.max(0, Math.min(n, TRACKS.length - 1)) : 0;
 }
 export function setSelectedTrackIndex(i) {
-  localStorage.setItem('kr_track_idx', String(i));
+  ctx.save.patch({ trackIdx: i });
 }
   export const REMOTE_LB_URL =
   'https://script.google.com/macros/s/AKfycbx_yj2WazYtxadLvQiEphfweughwsWnuBu_pTh6np6rA-UvdHqVJU7j55Ta0bEZUjCC/exec';
 // Character helpers
 export function getSelectedCharIndex() {
-  const n = parseInt(localStorage.getItem('kr_char_idx') ?? '0', 10);
+  const n = ctx.save.get().charIdx;
   return Number.isFinite(n) ? Math.max(0, Math.min(n, CHARACTERS.length - 1)) : 0;
 }
 export function setSelectedCharIndex(i) {
-  localStorage.setItem('kr_char_idx', String(i));
+  ctx.save.patch({ charIdx: i });
+}
 
-
+// Initials helpers (kr_last_name facade) -- used by OverScene's
+// Phaser-native initials picker.
+export function getLastInitials() {
+  return String(ctx.save.get().lastName || '').toUpperCase();
+}
+export function setLastInitials(s) {
+  ctx.save.patch({ lastName: s });
 }

@@ -90,8 +90,8 @@ export default class OverScene extends Phaser.Scene {
       align:'center', lineSpacing:8
     }).setOrigin(0.5, 0);
 
-    // 🔊/🔇 mute
-    const muted = (localStorage.getItem('kr_muted')==='1');
+    // 🔊/🔇 mute (SFX.muted is a live facade over ctx.settings)
+    const muted = SFX.muted;
     const muteBtn = this.add.text(width-60, 20, muted ? '🔇' : '🔊', { fontSize:'28px' })
       .setInteractive({ useHandCursor:true })
       .on('pointerdown', () => {
