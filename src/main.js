@@ -13,4 +13,9 @@ const config = {
   roundPixels: true,
   scene: [BootScene, MenuScene, PlayScene, OverScene]
 };
-new Phaser.Game(config);
+// Exposed for the same reason slime/critter-codex do: browser-automation
+// verification (and any future debugging) needs a handle on the live game
+// instance -- e.g. to read `window.game.scene.getScene('play')` state
+// directly when a backgrounded/automated tab can't be trusted to render
+// every frame on its own schedule.
+window.game = new Phaser.Game(config);
