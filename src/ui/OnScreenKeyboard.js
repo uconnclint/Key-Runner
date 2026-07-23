@@ -81,7 +81,6 @@ export default class OnScreenKeyboard extends Phaser.GameObjects.Container {
 
     // normalize once
     const t = String(target).toLowerCase();
-    const css = '#' + color.toString(16).padStart(6, '0');
 
     this.keys.forEach(({ k, cap, txt }) => {
       const isHit = (k.toLowerCase() === t);
@@ -90,11 +89,12 @@ export default class OnScreenKeyboard extends Phaser.GameObjects.Container {
       if (cap.clearTint) cap.clearTint();
 
       if (isHit) {
-        // apply highlight tint + matching text color
+        // tint the cap; label goes dark ink so the letter stays legible
+        // against the tinted face (matching the tint made it invisible)
         if (cap.setTintFill) cap.setTintFill(color);
         else if (cap.setTint) cap.setTint(color);
         else if (cap.setFillStyle) cap.setFillStyle(color);
-        if (txt && txt.setColor) txt.setColor(css);
+        if (txt && txt.setColor) txt.setColor('#06111f');
       } else {
         // non-target keys revert to subdued label color
         if (txt && txt.setColor) txt.setColor('#9db2d0');
