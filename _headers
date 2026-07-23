@@ -1,0 +1,55 @@
+# _headers — Cloudflare response headers (Workers static assets and Pages both read this file
+# from the deploy root). Long-cache content that never changes URL when it changes; always
+# revalidate HTML/JS/CSS so a shipped fix actually reaches a cached iPad/Chromebook instead of
+# sitting behind a stale cache with no service worker to bust it (game-house-style's "Cache"
+# gotcha).
+#
+# ONE RULE PER DIRECTORY — deliberately, not a blanket /*.js. Found + fixed during the
+# critter-codex Phase 2 migration (verified with wrangler dev + curl): Cloudflare's `*` DOES
+# cross path segments, so a blanket /*.js also matched /engine/phaser/vendor/phaser.min.js, and
+# Cloudflare comma-JOINS Cache-Control from every matching rule instead of letting the more
+# specific one win — the vendored Phaser build came back as `public, max-age=31536000,
+# immutable, public, max-age=0, must-revalidate`, a broken, self-contradicting header. This file
+# avoids that by giving src/ and engine/core/ their own scoped rules instead of a blanket /*.js.
+
+# Hashed/immutable art, audio, and the vendored Phaser build never need revalidation.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/engine/phaser/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Entry points — always revalidate so a redeploy is visible on the next load.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# No blanket /*.html here (same finding as slime's _headers): index.html is the only .html
+# file this game ships, and it's already covered by / and /index.html above — a /*.html rule
+# would only re-match the same file and double up its Cache-Control value (verified
+# empirically: harmless since the value is identical, but still two rules owning one path,
+# exactly what this file avoids everywhere else).
+
+# Scoped (not blanket /*.js) so neither ever overlaps /engine/phaser/vendor/*'s immutable rule
+# above — both recurse into every file below them but neither nests an immutable subfolder.
+/src/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/engine/core/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# engine/dom/ isn't used by this Phaser-track game today, but gets the same rule as engine/core/
+# for consistency/future-proofing (matches the canonical template). The handful of direct
+# engine/phaser/*.js files (ui.js, scale.js, scenes.js, textures.js, muteButton.js, classroom.js,
+# inputs/*.js — siblings of vendor/) are deliberately left WITHOUT an explicit rule rather than
+# risk a third overlapping pattern: they fall back to the platform's default asset caching.
+/engine/dom/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/ENGINE_VERSION.json
+  Cache-Control: public, max-age=0, must-revalidate

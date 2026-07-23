@@ -1,5 +1,37 @@
+# wrangler.toml — Cloudflare Workers static-assets deploy config. Copy this into a game repo
+# and replace the placeholder name below. Keep this file (and its sibling `_headers`, copied
+# from templates/_headers) version-controlled — an ungitignored deploy config is how a fresh
+# clone stays deployable (see game-house-style SKILL.md's "Deploy config is code" gotcha).
 name = "key-runner"
 compatibility_date = "2026-06-01"
 
 [assets]
 directory = "./"
+
+# --- Worker backend (multiplayer rooms, leaderboards, or any /api route) -------------------
+# Most games in this portfolio are pure static assets and need nothing below this line. Only
+# uncomment this section for a game with a real server component (a Durable-Object-backed
+# room, a save-sync endpoint, etc. — see KeyQuest for a worked example). `run_worker_first`
+# is required for any path that must reach the Worker script instead of being served straight
+# from [assets] — without it, a request to e.g. /api/join would just 404 against the static
+# asset router and your Worker code would never run. (Key Runner's leaderboard is a Google
+# Apps Script endpoint today, REMOTE_LB_URL in src/config.js — left as-is this round per the
+# migration plan; this section is where a future from-scratch Worker leaderboard would go.)
+#
+# main = "src/worker.js"
+#
+# [assets]
+# directory = "./public"
+# binding = "ASSETS"
+# run_worker_first = ["/api/*", "/ws"]
+#
+# [observability]
+# enabled = true
+#
+# [[durable_objects.bindings]]
+# name = "ROOM"
+# class_name = "GameRoom"
+#
+# [[migrations]]
+# tag = "v1"
+# new_sqlite_classes = ["GameRoom"]

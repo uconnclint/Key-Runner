@@ -1,3 +1,13 @@
+# .assetsignore — Cloudflare Workers static-assets ignore list (gitignore-style syntax).
+# Adopted from clint-engine/templates/assetsignore (the canonical list — see
+# clint-engine/docs/CONTRACTS.md "Templates & tools"). Keeps dev-only files, source control,
+# and editable art masters out of the deployed bundle.
+#
+# engine/core and engine/phaser (incl. the vendored Phaser build) DO ship — the game imports
+# them at runtime. Nothing under engine/ needs excluding here: the vendored copy sync-engine.mjs
+# writes carries no test/docs/tooling paths (clint-engine's own test/ and docs/ live at ITS repo
+# root, outside the engine/ directory that actually gets copied into this repo).
+
 **/.wrangler
 **/node_modules
 **/.git
@@ -8,3 +18,7 @@
 *.md
 wrangler.toml
 .assetsignore
+voice
+tools/
+docs/
+art/img/*.png
