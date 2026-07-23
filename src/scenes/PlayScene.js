@@ -3,6 +3,7 @@ import { KEY_POOLS, normalizeKey, isAllowedChar, IGNORE_KEYS } from '../utils/ke
 import { SFX } from '../utils/audio.js';
 import { updateMissionsFromRun } from '../utils/missions.js';
 import OnScreenKeyboard from '../ui/OnScreenKeyboard.js';
+import { HiddenInput } from '../../engine/phaser/inputs/hiddenInput.js';
 
 const HAZARDS = ['barricade', 'cone', 'crackedKey'];
 const PICKUPS = [
@@ -65,7 +66,15 @@ export default class PlayScene extends Phaser.Scene {
     this.sound.mute = SFX.muted;
     this._startPlaylist(getSelectedTrackIndex());
 
-    this.kb = new OnScreenKeyboard(this);
+    // Tap-typing path: each on-screen key runs through the exact same
+    // normalizeKey/isAllowedChar/correct-or-wrong logic a physical
+    // keydown does, by handing the raw letter to _handleKey() wrapped in
+    // a minimal event-shaped object ({ key, repeat: false }) --
+    // normalizeKey() lowercases single-char input either way, so a
+    // KEY_POOLS letter (already lowercase) round-trips unchanged.
+    this.kb = new OnScreenKeyboard(this, 0, 0, {
+      onKeyPress: (k) => this._handleKey({ key: k, repeat: false })
+    });
     this.add.existing(this.kb);
     const kbW = this.kb.totalWidth || 460;
     const kbH = this.kb.totalHeight || 140;
@@ -119,7 +128,26 @@ export default class PlayScene extends Phaser.Scene {
     this.settling = false;
 
     this._countdown();
-    this.keyHandler = e => this._handleKey(e);
+
+    // iPad soft-keyboard path: a hidden, off-screen <input> that stays
+    // focused (KeyQuest's HiddenInput -- engine/phaser/inputs/hiddenInput.js,
+    // verbatim API) so an iPad's on-screen OS keyboard has something real
+    // to type into. onKey forwards the raw KeyboardEvent straight to
+    // _handleKey(), the exact same shape (`.key`/`.repeat`) a window
+    // keydown already gets -- no translation needed.
+    this.hidden = new HiddenInput({ maxLength: 1, filter: /[a-zA-Z]/, onKey: (e) => this._handleKey(e) });
+
+    // Physical/Chromebook keyboard fallback. Guarded exactly like
+    // KeyQuest's RoundScene: when the hidden input has focus (the common
+    // case -- it aggressively refocuses on blur and on every pointerdown),
+    // this SAME keydown already ran through HiddenInput's own listener
+    // (attached directly to its <input>, which fires before the event
+    // bubbles up to window) -- without this guard a hardware keystroke
+    // would be double-counted.
+    this.keyHandler = e => {
+      if (document.activeElement === this.hidden?.el) return;
+      this._handleKey(e);
+    };
     window.addEventListener('keydown', this.keyHandler);
     this.events.once('shutdown', () => this._cleanup());
     this.events.once('destroy', () => this._cleanup());
@@ -494,6 +522,7 @@ export default class PlayScene extends Phaser.Scene {
 
   _cleanup(){
     window.removeEventListener('keydown', this.keyHandler);
+    this.hidden?.destroy();
     this._clearWaveTimer();
     if (this.pickupTimer) this.pickupTimer.remove();
     try { if (this.music?.isPlaying) this.music.stop(); } catch(e){}
